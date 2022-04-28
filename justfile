@@ -1,6 +1,9 @@
 default:
   just --list
 
+alias f := fmt
+alias s := serve
+
 all: build test clippy fmt-check
 
 build:
@@ -13,9 +16,10 @@ clippy:
   cargo clippy --all-targets --all-features
 
 dev-deps:
-	cargo install trunk
+  cargo install trunk
 
 fmt:
+  prettier --write .
   cargo +nightly fmt
 
 fmt-check:
