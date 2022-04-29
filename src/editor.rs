@@ -1,18 +1,5 @@
 use crate::common::*;
 
-#[derive(Debug, Default)]
-pub(crate) struct Position {
-  x: i32,
-  y: i32,
-}
-
-impl Position {
-  fn update(&mut self, e: MouseEvent) {
-    self.x = e.client_x();
-    self.y = e.client_y();
-  }
-}
-
 pub(crate) enum EditorMessage {
   Position(MouseEvent),
   Move(MouseEvent),
@@ -37,13 +24,19 @@ impl Component for Editor {
   fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
     use EditorMessage::*;
 
+    let canvas = self.node_ref.cast::<HtmlCanvasElement>().unwrap();
+
     match msg {
-      Position(e) => {
-        self.position.update(e);
+      Position(event) => {
+        self
+          .position
+          .update(event, canvas.get_bounding_client_rect());
         true
       }
-      Move(e) if e.buttons() == 1 => {
-        let canvas = self.node_ref.cast::<HtmlCanvasElement>().unwrap();
+      Move(event) => {
+        if event.buttons() != 1 {
+          return false;
+        }
 
         let ctx = canvas
           .get_context("2d")
@@ -58,15 +51,18 @@ impl Component for Editor {
         ctx.set_line_cap("round");
         ctx.set_stroke_style(&JsValue::from_str("#c0392b"));
 
-        ctx.move_to(self.position.x as f64, self.position.y as f64);
-        self.position.update(e);
-        ctx.line_to(self.position.x as f64, self.position.y as f64);
+        ctx.move_to(self.position.x, self.position.y);
+
+        self
+          .position
+          .update(event, canvas.get_bounding_client_rect());
+
+        ctx.line_to(self.position.x, self.position.y);
 
         ctx.stroke();
 
         true
       }
-      Move(_) => false,
     }
   }
 
@@ -77,15 +73,10 @@ impl Component for Editor {
       <canvas
         ref={self.node_ref.clone()}
         onresize={Callback::from(|_| ())}
-        onmousedown={ctx.link().callback(move |e: MouseEvent| Position(e))}
-        onmouseenter={ctx.link().callback(move |e: MouseEvent| Position(e))}
-        onmousemove={ctx.link().callback(move |e: MouseEvent| Move(e))}
+        onmousedown={ctx.link().callback(Position)}
+        onmouseenter={ctx.link().callback(Position)}
+        onmousemove={ctx.link().callback(Move)}
       />
     }
-  }
-
-  fn rendered(&mut self, _ctx: &Context<Self>, _first_render: bool) {
-    let _has_attributes =
-      self.node_ref.cast::<Element>().unwrap().has_attributes();
   }
 }

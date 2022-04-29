@@ -12,7 +12,12 @@ yew = "0.19.3"
 
 [dependencies.web-sys]
 version = "0.3.57"
-features = ["HtmlCanvasElement", "CanvasRenderingContext2d"]
+features = [
+  "CanvasRenderingContext2d",
+  "DomRect",
+  "Element",
+  "HtmlCanvasElement"
+]
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.30"

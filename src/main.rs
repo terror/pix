@@ -3,6 +3,7 @@ use crate::common::*;
 mod app;
 mod common;
 mod editor;
+mod position;
 
 fn main() {
   panic::set_hook(Box::new(console_error_panic_hook::hook));

@@ -2,8 +2,8 @@ pub(crate) use std::panic;
 
 pub(crate) use {
   wasm_bindgen::{JsCast, JsValue},
-  web_sys::{Element, HtmlCanvasElement},
+  web_sys::{DomRect, HtmlCanvasElement},
   yew::{prelude::*, NodeRef},
 };
 
-pub(crate) use crate::{app::App, editor::Editor};
+pub(crate) use crate::{app::App, editor::Editor, position::Position};
