@@ -1,4 +1,5 @@
 edition = "2018"
+max_width = 80
 newline_style = "Unix"
 struct_field_align_threshold = 20
 tab_spaces = 2

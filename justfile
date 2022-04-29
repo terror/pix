@@ -33,7 +33,7 @@ test:
   wasm-pack test --node
 
 serve:
-  trunk serve
+  RUST_LOG=info trunk serve
 
 watch +COMMAND='test':
   cargo watch --clear --exec "{{COMMAND}}"

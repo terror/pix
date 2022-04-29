@@ -9,6 +9,7 @@
 
       body {
         font-family: 'Inter', sans-serif;
+        margin: 0;
       }
 
       @supports (font-variation-settings: normal) {
@@ -17,6 +18,11 @@
           font-feature-settings: 'ss01' 1, 'kern' 1, 'liga' 1, 'cv05' 1,
             'tnum' 1;
         }
+      }
+
+      canvas {
+        outline: black 1px solid;
+        position: fixed;
       }
     </style>
     <link rel="stylesheet" href="/style.css" />

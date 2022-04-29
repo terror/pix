@@ -5,6 +5,7 @@ mod common;
 mod editor;
 
 fn main() {
+  panic::set_hook(Box::new(console_error_panic_hook::hook));
   wasm_logger::init(wasm_logger::Config::default());
   log::trace!("Initializing yew...");
   yew::start_app::<App>();

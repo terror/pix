@@ -192,9 +192,12 @@ dependencies = [
 name = "pix"
 version = "0.1.0"
 dependencies = [
+ "console_error_panic_hook",
  "log",
+ "wasm-bindgen",
  "wasm-bindgen-test",
  "wasm-logger",
+ "web-sys",
  "yew",
 ]
 
