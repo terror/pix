@@ -1,13 +1,13 @@
 use crate::common::*;
 
+pub(crate) struct Editor {
+  canvas:   NodeRef,
+  position: Position,
+}
+
 pub(crate) enum EditorMessage {
   Position(MouseEvent),
   Move(MouseEvent),
-}
-
-pub(crate) struct Editor {
-  node_ref: NodeRef,
-  position: Position,
 }
 
 impl Component for Editor {
@@ -16,24 +16,22 @@ impl Component for Editor {
 
   fn create(_ctx: &Context<Self>) -> Self {
     Self {
-      node_ref: NodeRef::default(),
+      canvas:   NodeRef::default(),
       position: Position::default(),
     }
   }
 
   fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
-    use EditorMessage::*;
-
-    let canvas = self.node_ref.cast::<HtmlCanvasElement>().unwrap();
+    let canvas = self.canvas.cast::<HtmlCanvasElement>().unwrap();
 
     match msg {
-      Position(event) => {
+      EditorMessage::Position(event) => {
         self
           .position
           .update(event, canvas.get_bounding_client_rect());
         true
       }
-      Move(event) => {
+      EditorMessage::Move(event) => {
         if event.buttons() != 1 {
           return false;
         }
@@ -67,16 +65,51 @@ impl Component for Editor {
   }
 
   fn view(&self, ctx: &Context<Self>) -> Html {
-    use EditorMessage::*;
-
     html! {
       <canvas
-        ref={self.node_ref.clone()}
+        ref={self.canvas.clone()}
         onresize={Callback::from(|_| ())}
-        onmousedown={ctx.link().callback(Position)}
-        onmouseenter={ctx.link().callback(Position)}
-        onmousemove={ctx.link().callback(Move)}
+        onmousedown={ctx.link().callback(EditorMessage::Position)}
+        onmouseenter={ctx.link().callback(EditorMessage::Position)}
+        onmousemove={ctx.link().callback(EditorMessage::Move)}
       />
+    }
+  }
+
+  fn rendered(&mut self, _ctx: &Context<Self>, first_render: bool) {
+    if first_render {
+      let canvas = self.canvas.cast::<HtmlCanvasElement>().unwrap();
+
+      canvas.set_width(800);
+      canvas.set_height(640);
+
+      let ctx = canvas
+        .get_context("2d")
+        .unwrap()
+        .unwrap()
+        .dyn_into::<web_sys::CanvasRenderingContext2d>()
+        .unwrap();
+
+      ctx.begin_path();
+
+      ctx.set_stroke_style(&JsValue::from_str("rgba(150, 150, 150, 0.75)"));
+
+      let mut x = 0;
+      let mut y = 0;
+
+      while x <= canvas.width() {
+        ctx.move_to(x as f64, 0.0);
+        ctx.line_to(x as f64, canvas.height() as f64);
+        x += 32;
+      }
+
+      while y <= canvas.height() {
+        ctx.move_to(0.0, y as f64);
+        ctx.line_to(canvas.width() as f64, y as f64);
+        y += 32;
+      }
+
+      ctx.stroke();
     }
   }
 }
