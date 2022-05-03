@@ -9,9 +9,9 @@ pub(crate) struct Editor {
 
 #[derive(Debug)]
 pub(crate) enum EditorMessage {
-  Color(Event),
+  ChangeColor(Event),
+  Draw(MouseEvent),
   Move(MouseEvent),
-  Position(MouseEvent),
 }
 
 #[derive(Debug)]
@@ -53,7 +53,7 @@ impl Component for Editor {
     let rect = canvas.get_bounding_client_rect();
 
     match msg {
-      EditorMessage::Position(_) => {
+      EditorMessage::Draw(_) => {
         let ctx = canvas
           .get_context("2d")
           .unwrap()
@@ -81,7 +81,7 @@ impl Component for Editor {
         );
         true
       }
-      EditorMessage::Color(event) => {
+      EditorMessage::ChangeColor(event) => {
         self.settings.pixel_color = event
           .target()
           .unwrap()
@@ -97,11 +97,11 @@ impl Component for Editor {
       <div class={classes!("container")}>
         <canvas
           ref={self.canvas.clone()}
-          onmousedown={ctx.link().callback(EditorMessage::Position)}
+          onmousedown={ctx.link().callback(EditorMessage::Draw)}
           onmousemove={ctx.link().callback(EditorMessage::Move)}
         />
         <div class={classes!("settings")}>
-          <input onchange={ctx.link().callback(EditorMessage::Color)} type="color"/>
+          <input onchange={ctx.link().callback(EditorMessage::ChangeColor)} type="color"/>
         </div>
       </div>
     }
