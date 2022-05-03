@@ -2,7 +2,7 @@ pub(crate) use std::panic;
 
 pub(crate) use {
   wasm_bindgen::{JsCast, JsValue},
-  web_sys::{DomRect, HtmlCanvasElement},
+  web_sys::{DomRect, HtmlCanvasElement, HtmlInputElement},
   yew::{prelude::*, NodeRef},
 };
 

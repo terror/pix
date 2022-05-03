@@ -4,7 +4,7 @@ use crate::common::*;
 pub(crate) fn app() -> Html {
   html! {
     <>
-      <p>{ "pix" }</p>
+      <p>{ "pix - a pixel editor" }</p>
       <Editor/>
     </>
   }

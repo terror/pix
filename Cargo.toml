@@ -16,7 +16,8 @@ features = [
   "CanvasRenderingContext2d",
   "DomRect",
   "Element",
-  "HtmlCanvasElement"
+  "HtmlCanvasElement",
+  "InputEvent"
 ]
 
 [dev-dependencies]

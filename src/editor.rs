@@ -9,8 +9,9 @@ pub(crate) struct Editor {
 
 #[derive(Debug)]
 pub(crate) enum EditorMessage {
-  Position(MouseEvent),
+  Color(Event),
   Move(MouseEvent),
+  Position(MouseEvent),
 }
 
 #[derive(Debug)]
@@ -19,6 +20,7 @@ pub(crate) struct EditorSettings {
   pixel_height: u32,
   canvas_width: u32,
   canvas_height: u32,
+  pixel_color: String,
 }
 
 impl Default for EditorSettings {
@@ -28,6 +30,7 @@ impl Default for EditorSettings {
       pixel_height: 32,
       canvas_width: 800,
       canvas_height: 640,
+      pixel_color: String::from("#000000"),
     }
   }
 }
@@ -50,15 +53,7 @@ impl Component for Editor {
     let rect = canvas.get_bounding_client_rect();
 
     match msg {
-      EditorMessage::Position(event) => {
-        self.position.update(event, rect);
-        true
-      }
-      EditorMessage::Move(event) => {
-        if event.buttons() != 1 {
-          return false;
-        }
-
+      EditorMessage::Position(_) => {
         let ctx = canvas
           .get_context("2d")
           .unwrap()
@@ -66,18 +61,32 @@ impl Component for Editor {
           .dyn_into::<web_sys::CanvasRenderingContext2d>()
           .unwrap();
 
-        ctx.begin_path();
+        ctx.set_fill_style(&JsValue::from_str(&self.settings.pixel_color));
 
-        ctx.set_line_width(5.0);
-        ctx.set_line_cap("round");
-        ctx.set_stroke_style(&JsValue::from_str("#c0392b"));
+        ctx.fill_rect(
+          self.position.x as f64,
+          self.position.y as f64,
+          self.settings.pixel_width as f64,
+          self.settings.pixel_height as f64,
+        );
 
-        ctx.move_to(self.position.x, self.position.y);
-        self.position.update(event, rect);
-        ctx.line_to(self.position.x, self.position.y);
-
-        ctx.stroke();
-
+        true
+      }
+      EditorMessage::Move(event) => {
+        self.position.update(
+          event,
+          rect,
+          self.settings.pixel_width as f64,
+          self.settings.pixel_height as f64,
+        );
+        true
+      }
+      EditorMessage::Color(event) => {
+        self.settings.pixel_color = event
+          .target()
+          .unwrap()
+          .unchecked_into::<HtmlInputElement>()
+          .value();
         true
       }
     }
@@ -85,13 +94,16 @@ impl Component for Editor {
 
   fn view(&self, ctx: &Context<Self>) -> Html {
     html! {
-      <canvas
-        ref={self.canvas.clone()}
-        onresize={Callback::from(|_| ())}
-        onmousedown={ctx.link().callback(EditorMessage::Position)}
-        onmouseenter={ctx.link().callback(EditorMessage::Position)}
-        onmousemove={ctx.link().callback(EditorMessage::Move)}
-      />
+      <div class={classes!("container")}>
+        <canvas
+          ref={self.canvas.clone()}
+          onmousedown={ctx.link().callback(EditorMessage::Position)}
+          onmousemove={ctx.link().callback(EditorMessage::Move)}
+        />
+        <div class={classes!("settings")}>
+          <input onchange={ctx.link().callback(EditorMessage::Color)} type="color"/>
+        </div>
+      </div>
     }
   }
 
