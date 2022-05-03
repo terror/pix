@@ -1,0 +1,46 @@
+@import url('https://rsms.me/inter/inter.css');
+@import url(https://cdn.jsdelivr.net/gh/tonsky/FiraCode@3/distr/fira_code.css);
+
+:root {
+  --settings-bg: #969696;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  text-align: center;
+}
+
+@supports (font-variation-settings: normal) {
+  body {
+    font-family: 'Inter var', sans-serif;
+    font-feature-settings: 'ss01' 1, 'kern' 1, 'liga' 1, 'cv05' 1,
+      'tnum' 1;
+  }
+}
+
+.settings {
+  align-items: center;
+  background: var(--settings-bg);
+  display: flex;
+  justify-content: center;
+  margin: auto;
+  opacity: 0.5;
+  overflow: hidden;
+  width: 802px;
+}
+
+.settings * {
+  margin: 5px;
+}
+
+.button {
+  background-color: var(--settings-bg);
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 10px 14px;
+}
+
+.button:hover {
+  background-color: gray;
+}
