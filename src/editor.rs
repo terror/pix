@@ -137,6 +137,7 @@ impl Editor {
   }
 
   fn clear(&mut self) -> Result {
+    self.redo.extend(self.pixels.clone());
     self.pixels.clear();
     self.draw_grid()
   }
