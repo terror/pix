@@ -4,6 +4,7 @@ use crate::common::*;
 pub(crate) struct Editor {
   canvas: NodeRef,
   pixels: Vec<(Position, String)>,
+  redo: Vec<(Position, String)>,
   position: Position,
   settings: EditorSettings,
 }
@@ -15,25 +16,27 @@ pub(crate) enum EditorMessage {
   Context(MouseEvent),
   Draw(MouseEvent),
   Move(MouseEvent),
+  Redo(MouseEvent),
+  Undo(MouseEvent),
 }
 
 #[derive(Debug)]
 pub(crate) struct EditorSettings {
-  pixel_width: u32,
-  pixel_height: u32,
-  canvas_width: u32,
   canvas_height: u32,
+  canvas_width: u32,
   pixel_color: String,
+  pixel_height: u32,
+  pixel_width: u32,
 }
 
 impl Default for EditorSettings {
   fn default() -> Self {
     Self {
-      pixel_width: 32,
-      pixel_height: 32,
-      canvas_width: 800,
       canvas_height: 640,
+      canvas_width: 800,
       pixel_color: String::from("#000000"),
+      pixel_height: 32,
+      pixel_width: 32,
     }
   }
 }
@@ -47,26 +50,25 @@ impl Component for Editor {
       canvas: NodeRef::default(),
       pixels: Vec::new(),
       position: Position::default(),
+      redo: Vec::new(),
       settings: EditorSettings::default(),
     }
   }
 
   fn update(&mut self, _ctx: &Context<Self>, message: Self::Message) -> bool {
-    use EditorMessage::*;
-
     match message {
       ChangeColor(event) => self.change_pixel_color(event),
       Clear(_) => self.clear(),
       Context(event) => self.clear_pixel(event),
       Draw(_) => self.draw_pixel(),
       Move(event) => self.update_position(event),
+      Redo(_) => self.redo(),
+      Undo(_) => self.undo(),
     }
     .is_ok()
   }
 
   fn view(&self, ctx: &Context<Self>) -> Html {
-    use EditorMessage::*;
-
     html! {
       <div class={classes!("container")}>
         <canvas
@@ -79,6 +81,12 @@ impl Component for Editor {
           <input onchange={ctx.link().callback(ChangeColor)} type="color"/>
           <button class={classes!("button")} onclick={ctx.link().callback(Clear)}>
             <i class={classes!(vec!["fa", "fa-trash"])}></i>
+          </button>
+          <button class={classes!("button")} hidden={self.pixels.len() == 0} onclick={ctx.link().callback(Undo)}>
+            <i class={classes!(vec!["fa", "fa-rotate-left"])}></i>
+          </button>
+          <button class={classes!("button")} hidden={self.redo.len() == 0} onclick={ctx.link().callback(Redo)}>
+            <i class={classes!(vec!["fa", "fa-rotate-right"])}></i>
           </button>
         </div>
       </div>
@@ -214,5 +222,19 @@ impl Editor {
     );
 
     Ok(())
+  }
+
+  fn undo(&mut self) -> Result {
+    self
+      .redo
+      .push(self.pixels.pop().ok_or("No pixels to undo")?);
+    self.draw()
+  }
+
+  fn redo(&mut self) -> Result {
+    self
+      .pixels
+      .push(self.redo.pop().ok_or("No pixels to redo")?);
+    self.draw()
   }
 }
