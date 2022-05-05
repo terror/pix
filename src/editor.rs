@@ -82,10 +82,10 @@ impl Component for Editor {
           <button class={classes!("button")} onclick={ctx.link().callback(Clear)}>
             <i class={classes!(vec!["fa", "fa-trash"])}></i>
           </button>
-          <button class={classes!("button")} hidden={self.pixels.len() == 0} onclick={ctx.link().callback(Undo)}>
+          <button class={classes!("button")} disabled={self.pixels.len() == 0} onclick={ctx.link().callback(Undo)}>
             <i class={classes!(vec!["fa", "fa-rotate-left"])}></i>
           </button>
-          <button class={classes!("button")} hidden={self.redo.len() == 0} onclick={ctx.link().callback(Redo)}>
+          <button class={classes!("button")} disabled={self.redo.len() == 0} onclick={ctx.link().callback(Redo)}>
             <i class={classes!(vec!["fa", "fa-rotate-right"])}></i>
           </button>
         </div>
