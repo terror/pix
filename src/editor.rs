@@ -3,8 +3,8 @@ use crate::common::*;
 #[derive(Debug)]
 pub(crate) struct Editor {
   canvas: NodeRef,
-  pixels: Vec<(Position, String)>,
-  redo: Vec<(Position, String)>,
+  pixels: Vec<Pixel>,
+  redo: Vec<Vec<Pixel>>,
   position: Position,
   settings: EditorSettings,
 }
@@ -82,10 +82,10 @@ impl Component for Editor {
           <button class={classes!("button")} onclick={ctx.link().callback(Clear)}>
             <i class={classes!(vec!["fa", "fa-trash"])}></i>
           </button>
-          <button class={classes!("button")} disabled={self.pixels.len() == 0} onclick={ctx.link().callback(Undo)}>
+          <button class={classes!("button")} disabled={self.pixels.is_empty()} onclick={ctx.link().callback(Undo)}>
             <i class={classes!(vec!["fa", "fa-rotate-left"])}></i>
           </button>
-          <button class={classes!("button")} disabled={self.redo.len() == 0} onclick={ctx.link().callback(Redo)}>
+          <button class={classes!("button")} disabled={self.redo.is_empty()} onclick={ctx.link().callback(Redo)}>
             <i class={classes!(vec!["fa", "fa-rotate-right"])}></i>
           </button>
         </div>
@@ -137,7 +137,7 @@ impl Editor {
   }
 
   fn clear(&mut self) -> Result {
-    self.redo.extend(self.pixels.clone());
+    self.redo.push(self.pixels.clone());
     self.pixels.clear();
     self.draw_grid()
   }
@@ -145,16 +145,24 @@ impl Editor {
   fn clear_pixel(&mut self, event: MouseEvent) -> Result {
     event.prevent_default();
 
-    self.pixels = self
+    if let Some(pixel) = self
       .pixels
       .iter()
-      .filter(|(pixel, _)| {
-        !(pixel.x == self.position.x && pixel.y == self.position.y)
-      })
-      .cloned()
-      .collect();
+      .find(|pixel| pixel.position == self.position)
+    {
+      self.redo.push(vec![pixel.clone()]);
 
-    self.draw()
+      self.pixels = self
+        .pixels
+        .iter()
+        .filter(|curr| *curr != pixel)
+        .cloned()
+        .collect();
+
+      return self.draw();
+    }
+
+    Ok(())
   }
 
   fn draw_grid(&self) -> Result {
@@ -190,9 +198,10 @@ impl Editor {
   }
 
   fn draw_pixel(&mut self) -> Result {
-    self
-      .pixels
-      .push((self.position.clone(), self.settings.pixel_color.clone()));
+    self.pixels.push(Pixel {
+      position: self.position.clone(),
+      color: self.settings.pixel_color.clone(),
+    });
     self.draw()
   }
 
@@ -201,11 +210,11 @@ impl Editor {
 
     self.draw_grid()?;
 
-    self.pixels.iter().for_each(|(pixel, color)| {
-      context.set_fill_style(&JsValue::from_str(color));
+    self.pixels.iter().for_each(|pixel| {
+      context.set_fill_style(&JsValue::from_str(&pixel.color));
       context.fill_rect(
-        pixel.x as f64,
-        pixel.y as f64,
+        pixel.position.x as f64,
+        pixel.position.y as f64,
         self.settings.pixel_width as f64,
         self.settings.pixel_height as f64,
       );
@@ -228,14 +237,14 @@ impl Editor {
   fn undo(&mut self) -> Result {
     self
       .redo
-      .push(self.pixels.pop().ok_or("No pixels to undo")?);
+      .push(vec![self.pixels.pop().ok_or("No pixels to undo")?]);
     self.draw()
   }
 
   fn redo(&mut self) -> Result {
     self
       .pixels
-      .push(self.redo.pop().ok_or("No pixels to redo")?);
+      .extend(self.redo.pop().ok_or("No pixels to redo")?);
     self.draw()
   }
 }

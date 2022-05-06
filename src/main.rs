@@ -3,6 +3,7 @@ use crate::common::*;
 mod app;
 mod common;
 mod editor;
+mod pixel;
 mod position;
 
 fn main() {

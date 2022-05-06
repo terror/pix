@@ -9,6 +9,7 @@ pub(crate) use {
 pub(crate) use crate::{
   app::App,
   editor::{Editor, EditorMessage::*},
+  pixel::Pixel,
   position::Position,
 };
 
