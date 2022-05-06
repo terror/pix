@@ -3,8 +3,8 @@ use crate::common::*;
 #[derive(Debug)]
 pub(crate) struct Editor {
   canvas: NodeRef,
-  pixels: Vec<Pixel>,
-  redo: Vec<Vec<Pixel>>,
+  operations: Vec<Vec<Pixel>>,
+  pixels: Vec<Vec<Pixel>>,
   position: Position,
   settings: EditorSettings,
 }
@@ -48,9 +48,9 @@ impl Component for Editor {
   fn create(_ctx: &Context<Self>) -> Self {
     Self {
       canvas: NodeRef::default(),
+      operations: Vec::new(),
       pixels: Vec::new(),
       position: Position::default(),
-      redo: Vec::new(),
       settings: EditorSettings::default(),
     }
   }
@@ -78,14 +78,24 @@ impl Component for Editor {
           oncontextmenu={ctx.link().callback(Context)}
         />
         <div class={classes!("settings")}>
-          <input onchange={ctx.link().callback(ChangeColor)} type="color"/>
-          <button class={classes!("button")} onclick={ctx.link().callback(Clear)}>
+          <input
+            onchange={ctx.link().callback(ChangeColor)}
+            type="color"/>
+          <button
+            class={classes!("button")}
+            onclick={ctx.link().callback(Clear)}>
             <i class={classes!(vec!["fa", "fa-trash"])}></i>
           </button>
-          <button class={classes!("button")} disabled={self.pixels.is_empty()} onclick={ctx.link().callback(Undo)}>
+          <button
+            class={classes!("button")}
+            disabled={self.pixels.is_empty()}
+            onclick={ctx.link().callback(Undo)}>
             <i class={classes!(vec!["fa", "fa-rotate-left"])}></i>
           </button>
-          <button class={classes!("button")} disabled={self.redo.is_empty()} onclick={ctx.link().callback(Redo)}>
+          <button
+            class={classes!("button")}
+            disabled={self.operations.is_empty()}
+            onclick={ctx.link().callback(Redo)}>
             <i class={classes!(vec!["fa", "fa-rotate-right"])}></i>
           </button>
         </div>
@@ -137,29 +147,35 @@ impl Editor {
   }
 
   fn clear(&mut self) -> Result {
-    self.redo.push(self.pixels.clone());
+    self
+      .operations
+      .push(self.pixels.iter().flatten().cloned().collect());
+
     self.pixels.clear();
+
     self.draw_grid()
   }
 
   fn clear_pixel(&mut self, event: MouseEvent) -> Result {
     event.prevent_default();
 
-    if let Some(pixel) = self
-      .pixels
-      .iter()
-      .find(|pixel| pixel.position == self.position)
-    {
-      self.redo.push(vec![pixel.clone()]);
-
-      self.pixels = self
-        .pixels
+    for operation in self.pixels.clone() {
+      if let Some(pixel) = operation
         .iter()
-        .filter(|curr| *curr != pixel)
-        .cloned()
-        .collect();
+        .find(|pixel| pixel.position == self.position)
+      {
+        self.operations.push(vec![pixel.clone()]);
 
-      return self.draw();
+        self.pixels = self
+          .pixels
+          .iter()
+          .map(|row| {
+            row.iter().filter(|curr| *curr != pixel).cloned().collect()
+          })
+          .collect();
+
+        return self.draw();
+      }
     }
 
     Ok(())
@@ -198,10 +214,10 @@ impl Editor {
   }
 
   fn draw_pixel(&mut self) -> Result {
-    self.pixels.push(Pixel {
+    self.pixels.push(vec![Pixel {
       position: self.position.clone(),
       color: self.settings.pixel_color.clone(),
-    });
+    }]);
     self.draw()
   }
 
@@ -210,14 +226,16 @@ impl Editor {
 
     self.draw_grid()?;
 
-    self.pixels.iter().for_each(|pixel| {
-      context.set_fill_style(&JsValue::from_str(&pixel.color));
-      context.fill_rect(
-        pixel.position.x as f64,
-        pixel.position.y as f64,
-        self.settings.pixel_width as f64,
-        self.settings.pixel_height as f64,
-      );
+    self.pixels.iter().for_each(|operation| {
+      operation.iter().for_each(|pixel| {
+        context.set_fill_style(&JsValue::from_str(&pixel.color));
+        context.fill_rect(
+          pixel.position.x as f64,
+          pixel.position.y as f64,
+          self.settings.pixel_width as f64,
+          self.settings.pixel_height as f64,
+        );
+      })
     });
 
     Ok(())
@@ -236,15 +254,15 @@ impl Editor {
 
   fn undo(&mut self) -> Result {
     self
-      .redo
-      .push(vec![self.pixels.pop().ok_or("No pixels to undo")?]);
+      .operations
+      .push(self.pixels.pop().ok_or("No pixels to undo")?);
     self.draw()
   }
 
   fn redo(&mut self) -> Result {
     self
       .pixels
-      .extend(self.redo.pop().ok_or("No pixels to redo")?);
+      .push(self.operations.pop().ok_or("No pixels to redo")?);
     self.draw()
   }
 }
