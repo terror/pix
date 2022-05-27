@@ -1,5 +1,5 @@
 [build]
-target = "public/index.html"
+target = "www/index.html"
 
 [serve]
 addr = "127.0.0.1"
