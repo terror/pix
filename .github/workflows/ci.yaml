@@ -57,7 +57,7 @@ jobs:
 
     - uses: Swatinem/rust-cache@v1
     - name: Check Lockfile
-      run: cargo update --locked --package degenerate
+      run: cargo update --locked --package pix
 
     - name: Install `wasm-bindgen`
       uses: jetli/wasm-bindgen-action@v0.1.0
@@ -104,7 +104,7 @@ jobs:
           --target web \
           --no-typescript \
           --out-dir www \
-          target/wasm32-unknown-unknown/release/degenerate.wasm
+          target/wasm32-unknown-unknown/release/pix.wasm
 
     - name: Record Git Revision
       run: git rev-parse --verify HEAD > www/commit.txt
